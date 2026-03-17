@@ -1,0 +1,19 @@
+apiVersion: v2
+name: kubeoos
+description: Kubernetes controller that adds out-of-service taint to NotReady nodes for pod evacuation
+type: application
+version: 0.1.0
+appVersion: "0.1.0"
+home: https://github.com/migetapp/kubeoos
+sources:
+  - https://github.com/migetapp/kubeoos
+maintainers:
+  - name: Krzysztof Taraszka
+    email: krzysztof.taraszka@gmail.com
+keywords:
+  - kubernetes
+  - node
+  - out-of-service
+  - taint
+  - evacuation
+  - bare-metal

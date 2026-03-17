@@ -1,0 +1,42 @@
+replicaCount: 2
+
+image:
+  repository: ghcr.io/migetapp/kubeoos
+  tag: ""  # defaults to appVersion
+  pullPolicy: IfNotPresent
+
+args:
+  notReadyTimeout: 5m
+  maxUnhealthyPercent: 49
+  checkInterval: 30s
+  logLevel: 2  # klog verbosity
+
+leaderElection:
+  enabled: true
+
+serviceAccount:
+  create: true
+  name: ""
+  annotations: {}
+
+resources:
+  requests:
+    cpu: 10m
+    memory: 32Mi
+  limits:
+    memory: 64Mi
+
+nodeSelector: {}
+tolerations:
+  - key: node-role.kubernetes.io/control-plane
+    operator: Exists
+    effect: NoSchedule
+affinity:
+  podAntiAffinity:
+    preferredDuringSchedulingIgnoredDuringExecution:
+      - weight: 100
+        podAffinityTerm:
+          labelSelector:
+            matchLabels:
+              app.kubernetes.io/name: kubeoos
+          topologyKey: kubernetes.io/hostname
