@@ -1,0 +1,60 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+  packages: write
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: migetapp/kubeoos
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract version
+        id: version
+        run: echo "version=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          platforms: linux/amd64,linux/arm64
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.version.outputs.version }}
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Package Helm chart
+        run: |
+          helm package charts/kubeoos --version ${{ steps.version.outputs.version }} --app-version ${{ steps.version.outputs.version }}
+
+      - name: Push Helm chart to GHCR
+        run: |
+          helm push kubeoos-${{ steps.version.outputs.version }}.tgz oci://${{ env.REGISTRY }}/migetapp/kubeoos/charts
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
+          files: kubeoos-${{ steps.version.outputs.version }}.tgz
